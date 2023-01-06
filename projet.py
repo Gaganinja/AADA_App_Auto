@@ -79,8 +79,6 @@ for e in Train_data.columns:
 X = Train_data[features]
 # X_test = Test_data[features]
 Y= Train_data['Item_Outlet_Sales']
-X_train,X_test,y_train,y_test = train_test_split(X,Y,test_size=0.2,random_state=22)
-
 
 
 from sklearn.model_selection import cross_val_score
@@ -95,25 +93,27 @@ def multi_models(model, Xtrain, ytrain, Xtest, ytest):
     print("R MSE = %.2f" % np.sqrt(mse))
     waiting_time("Calculating score")
     print("Score = %.2f" % r2_score(ytest,y_pred))
+    scores = cross_val_score(model, X,Y,cv=5)
+    # print(scores)
+    print("CV K=5 Score mean %.2f" %scores.mean())
     scores = cross_val_score(model, X,Y,cv=10)
     # print(scores)
     print("CV K=10 Score mean %.2f" %scores.mean())
-    scores = cross_val_score(model, X,Y,cv=20)
-    # print(scores)
-    print("CV K=20 Score mean %.2f" %scores.mean())
     
 
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, GradientBoostingRegressor, HistGradientBoostingRegressor, VotingRegressor, StackingRegressor
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.linear_model import Lasso
-from sklearn.svm import SVC
+from sklearn.linear_model import Lasso, Perceptron
+
 models = [
     LinearRegression(),
     XGBRegressor(),
     KNeighborsRegressor(),
     Lasso(alpha=0.1),
     RandomForestRegressor(),
-    SVC()
+    AdaBoostRegressor(),
+    GradientBoostingRegressor(),
+    HistGradientBoostingRegressor(),
 ]
 
 models_names = [
@@ -122,9 +122,17 @@ models_names = [
     "KNeighborsRegressor",
     "Lasso",
     "RandomForestRegressor",
-    "svm"
+    "AdaboostRegressor",
+    "GradientBoostingRegressor",
+    "HistGradientBoostingRegressor",
 ]
+
+
+
 
 for i in range(len(models)):
     print("********************************  %s  *******************************" % models_names[i])
-    multi_models(models[i], X_train, y_train, X_test, y_test)
+    for j in [0.1,0.2,0.3]:
+        X_train,X_test,y_train,y_test = train_test_split(X,Y,test_size=j,random_state=22)
+        print("*********** split %.2f - %.2f" %(1-j, j))
+        multi_models(models[i], X_train, y_train, X_test, y_test)
