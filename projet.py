@@ -84,19 +84,23 @@ Y= Train_data['Item_Outlet_Sales']
 from sklearn.model_selection import cross_val_score
 def multi_models(model, Xtrain, ytrain, Xtest, ytest):
     waiting_time("Fitting model")
-    model.fit(Xtrain,ytrain)
+    model[0].fit(Xtrain,ytrain)
     waiting_time("Prediction")
-    y_pred = model.predict(Xtest)
+    y_pred = model[0].predict(Xtest)
     waiting_time("Calculating MSE")
     mse = mean_squared_error(ytest,y_pred)
     print("MSE = %.2f " % mse)
     print("R MSE = %.2f" % np.sqrt(mse))
+    to_append.append(np.sqrt(mse))
     waiting_time("Calculating score")
     print("Score = %.2f" % r2_score(ytest,y_pred))
-    scores = cross_val_score(model, X,Y,cv=5)
+    to_append.append(r2_score(ytest,y_pred))
+    scores = cross_val_score(model[0], X,Y,cv=5)
+    to_append.append(scores.mean())
     # print(scores)
     print("CV K=5 Score mean %.2f" %scores.mean())
-    scores = cross_val_score(model, X,Y,cv=10)
+    scores = cross_val_score(model[0], X,Y,cv=10)
+    to_append.append(scores.mean())
     # print(scores)
     print("CV K=10 Score mean %.2f" %scores.mean())
     
@@ -106,33 +110,74 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import Lasso, Perceptron
 
 models = [
-    LinearRegression(),
-    XGBRegressor(),
-    KNeighborsRegressor(),
-    Lasso(alpha=0.1),
-    RandomForestRegressor(),
-    AdaBoostRegressor(),
-    GradientBoostingRegressor(),
-    HistGradientBoostingRegressor(),
+    [LinearRegression(),"Linear Regression"],
+    # [XGBRegressor(), "XGBRegressor"],
+    # [KNeighborsRegressor(), "KNeighborsRegressor"],
+    [Lasso(alpha=0.1), "Lasso"],
+    # [RandomForestRegressor(),"RandomForestRegressor"],
+    # [AdaBoostRegressor(),"AdaBoostRegressor"],
+    # [GradientBoostingRegressor(),"GradientBoostingRegressor"],
+    # [HistGradientBoostingRegressor(),"HistGradientBoostingRegressor"]
 ]
 
-models_names = [
-    "Linear Regression",
-    "XGBRegressor",
-    "KNeighborsRegressor",
-    "Lasso",
-    "RandomForestRegressor",
-    "AdaboostRegressor",
-    "GradientBoostingRegressor",
-    "HistGradientBoostingRegressor",
-]
-
-
-
-
-for i in range(len(models)):
-    print("********************************  %s  *******************************" % models_names[i])
+for elt in models:
+    print("********************************  %s  *******************************" % elt[1])
     for j in [0.1,0.2,0.3]:
         X_train,X_test,y_train,y_test = train_test_split(X,Y,test_size=j,random_state=22)
         print("*********** split %.2f - %.2f" %(1-j, j))
-        multi_models(models[i], X_train, y_train, X_test, y_test)
+        to_append=[]
+        multi_models(elt, X_train, y_train, X_test, y_test)
+        elt.append(to_append)
+        
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import plotly.express as px
+
+def getlists(mode):
+    x = []
+    y = []
+    for elt in models:
+        x.append(elt[1])
+        y.append(elt[mode][0])
+    return x,y
+
+
+
+fig = make_subplots(rows=1,cols=2,subplot_titles=("RMSE","Accuracy"))
+
+plot = go.Bar(x=getlists(2)[0],y=getlists(2)[1])
+fig.append_trace(plot,row=1,col=1)
+
+plot = go.Bar(x=getlists(2)[0],y=getlists(2)[1:3]),
+
+
+fig.update_layout(
+    updatemenus=[
+        dict(
+            type = "buttons",
+            direction = "down",
+            buttons=list([
+                dict(
+                    args=[{"y":[getlists(2)[1]]}],
+                    label="0.9 - 0.1",
+                    method="update"
+                ),
+                dict(
+                    args=[{"y":[getlists(3)[1]]}],
+                    label="0.8 - 0.2",
+                    method="update"
+                ),
+                dict(
+                    args=[{"y":[getlists(4)[1]]}],
+                    label="0.7 - 0.3",
+                    method="update"
+                )
+            ]),
+        ),
+    ]
+)
+fig.update_xaxes(type='category')
+
+# fig.append_trace(plot,row=1,col=2)
+fig.show()
+# plot.show()
