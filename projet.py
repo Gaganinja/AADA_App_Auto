@@ -81,26 +81,50 @@ X = Train_data[features]
 Y= Train_data['Item_Outlet_Sales']
 X_train,X_test,y_train,y_test = train_test_split(X,Y,test_size=0.2,random_state=22)
 
-waiting_time("Building model")
 
-LR = LinearRegression()
-LR.fit(X_train,y_train)
-y_pred = LR.predict(X_test)
-coef2 = pd.Series(LR.coef_,features).sort_values()
 
-print(coef2)
-
-waiting_time("Calculating MSE")
-print(mean_squared_error(y_test, y_pred))
-
-waiting_time("Calculating score")
-R2 = r2_score(y_test,y_pred)
-print(R2)
-
-waiting_time("Optimization: cross_validation (10 times)")
 from sklearn.model_selection import cross_val_score
-scores = cross_val_score(LR, X,Y,cv=10)
-print(scores)
-print(scores.mean(), scores.std())
+def multi_models(model, Xtrain, ytrain, Xtest, ytest):
+    waiting_time("Fitting model")
+    model.fit(Xtrain,ytrain)
+    waiting_time("Prediction")
+    y_pred = model.predict(Xtest)
+    waiting_time("Calculating MSE")
+    mse = mean_squared_error(ytest,y_pred)
+    print("MSE = %.2f " % mse)
+    print("R MSE = %.2f" % np.sqrt(mse))
+    waiting_time("Calculating score")
+    print("Score = %.2f" % r2_score(ytest,y_pred))
+    scores = cross_val_score(model, X,Y,cv=10)
+    # print(scores)
+    print("CV K=10 Score mean %.2f" %scores.mean())
+    scores = cross_val_score(model, X,Y,cv=20)
+    # print(scores)
+    print("CV K=20 Score mean %.2f" %scores.mean())
+    
 
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.linear_model import Lasso
+from sklearn.svm import SVC
+models = [
+    LinearRegression(),
+    XGBRegressor(),
+    KNeighborsRegressor(),
+    Lasso(alpha=0.1),
+    RandomForestRegressor(),
+    SVC()
+]
 
+models_names = [
+    "Linear Regression",
+    "XGBRegressor",
+    "KNeighborsRegressor",
+    "Lasso",
+    "RandomForestRegressor",
+    "svm"
+]
+
+for i in range(len(models)):
+    print("********************************  %s  *******************************" % models_names[i])
+    multi_models(models[i], X_train, y_train, X_test, y_test)
