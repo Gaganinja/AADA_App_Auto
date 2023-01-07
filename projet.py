@@ -95,11 +95,11 @@ def multi_models(model, Xtrain, ytrain, Xtest, ytest):
     waiting_time("Calculating score")
     print("Score = %.2f" % r2_score(ytest,y_pred))
     to_append.append(r2_score(ytest,y_pred))
-    scores = cross_val_score(model[0], X,Y,cv=5)
+    scores = cross_val_score(model[0], X,Y,cv=2)
     to_append.append(scores.mean())
     # print(scores)
     print("CV K=5 Score mean %.2f" %scores.mean())
-    scores = cross_val_score(model[0], X,Y,cv=10)
+    scores = cross_val_score(model[0], X,Y,cv=4)
     to_append.append(scores.mean())
     # print(scores)
     print("CV K=10 Score mean %.2f" %scores.mean())
@@ -111,9 +111,9 @@ from sklearn.linear_model import Lasso, Perceptron
 
 models = [
     [LinearRegression(),"Linear Regression"],
-    # [XGBRegressor(), "XGBRegressor"],
+    [XGBRegressor(), "XGBRegressor"],
     # [KNeighborsRegressor(), "KNeighborsRegressor"],
-    [Lasso(alpha=0.1), "Lasso"],
+    # [Lasso(alpha=0.1), "Lasso"],
     # [RandomForestRegressor(),"RandomForestRegressor"],
     # [AdaBoostRegressor(),"AdaBoostRegressor"],
     # [GradientBoostingRegressor(),"GradientBoostingRegressor"],
@@ -141,16 +141,16 @@ def getlists(mode):
         y.append(elt[mode][0])
     return x,y
 
-
+def getlists2(mode):
+    y=[]
+    for elt in models:
+        y.append(elt[mode][1:3])
+    return y
 
 fig = make_subplots(rows=1,cols=2,subplot_titles=("RMSE","Accuracy"))
 
 plot = go.Bar(x=getlists(2)[0],y=getlists(2)[1])
 fig.append_trace(plot,row=1,col=1)
-
-plot = go.Bar(x=getlists(2)[0],y=getlists(2)[1:3]),
-
-
 fig.update_layout(
     updatemenus=[
         dict(
@@ -176,8 +176,12 @@ fig.update_layout(
         ),
     ]
 )
-fig.update_xaxes(type='category')
+# plot = go.Bar(x=getlists(2)[0],y=getlists2(2)),
 
-# fig.append_trace(plot,row=1,col=2)
+
+
+# fig.update_xaxes(type='category')
+
+fig.append_trace(plot,row=1,col=2)
 fig.show()
 # plot.show()
